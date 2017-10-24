@@ -12,3 +12,4 @@
 *.m~
 bin/
 development/
+.idea/
