@@ -64,10 +64,12 @@ def findMainOrientation(img, pixelvalue):
     return x_v1, y_v1
 
 
-def createDataFrame(dataloc):
+def createDataFrame(dataloc, phase='ED'):
     """
     This function creates a Pandas DataFrame with the center coordinates and orientation information for each patient
     directory in dataloc. It only focuses on 'End of Dyastole' for now.
+    :param dataloc: name of the folder where the patients directories are located.
+    :param phase: string indicating which phase is taken in account (end of dyastole or end of systole)
     :return: a Pandas DataFrame, with 4 columns ("rowCenter", "colCenter", "xOrientation", "yOrientation"), and as
     many rows as there are patients directories.
     """
@@ -81,19 +83,19 @@ def createDataFrame(dataloc):
     df = pd.DataFrame(index=patients, columns=["rowCenter", "colCenter", "xOrientation", "yOrientation"])
 
     for patient in patients:
-        # Read 'End of Diastole' image & mask
-        image_ed, _, _, _ = acquisition.load_mhd_data('{d}/{p}/{p}_4CH_ED.mhd'.format(d=dataloc, p=patient))
-        image__ed_gt, _, _, _ = acquisition.load_mhd_data('{d}/{p}/{p}_4CH_ED_gt.mhd'.format(d=dataloc, p=patient))
+        # Read image & mask
+        image, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}.mhd'.format(d=dataloc, pa=patient, ph=phase))
+        image_gt, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}_gt.mhd'.format(d=dataloc, pa=patient, ph=phase))
         # Keep only the region corresponding to the left ventricle
-        vent_ed = getRoi(image__ed_gt, 1)
-        # Get the center of the left ventricle for ED
-        r_ed, c_ed = findCenter(vent_ed)
-        # Get the orientation of the left ventricle during ED
-        x_v1, y_v1 = findMainOrientation(vent_ed, 1)
+        ventricle = getRoi(image_gt, 1)
+        # Get the center of the left ventricle
+        row, col = findCenter(ventricle)
+        # Get the orientation of the left ventricle
+        x_v1, y_v1 = findMainOrientation(ventricle, 1)
 
         # Now, gather these info into the DataFrame
-        df['rowCenter'][patient] = r_ed
-        df['colCenter'][patient] = c_ed
+        df['rowCenter'][patient] = row
+        df['colCenter'][patient] = col
         df['xOrientation'][patient] = x_v1
         df['yOrientation'][patient] = y_v1
 
