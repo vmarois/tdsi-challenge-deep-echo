@@ -29,7 +29,7 @@ x_v1, y_v1 = findMainOrientation(vent_ed, 1)
 
 #plotCenterOrientation(vent_ed, (r_ed, c_ed), (x_v1, y_v1))
 
-# try to create a panda DF containing center & orientation info for left ventricle ED for 10 patients
-#df = createDataFrame('data')
-#print(df.head())
+# try to create a panda DF containing center & orientation info for left ventricle (ED) for all patients
+df = createDataFrame('data')
+print(df.head())
 
