@@ -2,10 +2,11 @@
 
 import pandas as pd
 import numpy as np
-from scipy import ndimage
+from scipy import ndimage, misc
 import os
 
 from . import acquisition
+
 
 def getRoi(image, pixelvalue):
     """
@@ -17,6 +18,22 @@ def getRoi(image, pixelvalue):
     """
     return ((image == pixelvalue)[:, :]).astype(int)
 
+
+def resizeImgArr(img, mask, size=(96, 96)):
+    """
+    This function resizes an image and its associated ground truth mask to the given size.
+    :param img: The original gray-level image to resize.
+    :param mask: The binary mask corresponding to the main region of interest.
+    :param size: a tuple corresponding to the desired new size.
+    :return: the resized image and mask as numpy ndarray.
+    """
+    resizedImg = misc.imresize(img, size, interp='nearest')
+    resizedMask = misc.imresize(mask, size, interp='nearest')
+
+    # we work with a binary mask, which takes either 0 or 1 as pixel intensity value. misc.imresize resets the gray
+    # level, fitting them between 0 & 255. We manually rearrange the value. HAS TO BE FIXED IN FUTURE COMMIT
+    resizedMask[resizedMask == 255] = 1
+    return resizedImg, resizedMask
 
 def findCenter(img):
     """

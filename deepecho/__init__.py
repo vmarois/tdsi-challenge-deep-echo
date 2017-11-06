@@ -7,5 +7,5 @@ from . import preprocessing
 from . import visualization
 
 from .acquisition import load_mhd_data
-from .preprocessing import getRoi, findCenter, findMainOrientation, createDataFrame
+from .preprocessing import getRoi, resizeImgArr, findCenter, findMainOrientation, createDataFrame
 from .visualization import plotCenterOrientation, plotImageMask
