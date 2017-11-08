@@ -36,9 +36,9 @@ def plotImageMask(image, mask, phase='ED'):
     """
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 2, 1)
-    ax1.imshow(image, cmap='Greys')
+    ax1.imshow(image, cmap='Greys_r')
     ax1.set_title('{} image'.format(phase))
     ax2 = fig.add_subplot(1, 2, 2)
-    ax2.imshow(mask, cmap='Greys')
+    ax2.imshow(mask, cmap='Greys_r')
     ax2.set_title('{} Ground Truth Mask'.format(phase))
     plt.show()
