@@ -104,7 +104,5 @@ def load_train_data():
 if __name__ == '__main__':
     # create_train_data()
     X, y = load_train_data()
-    print("X.shape = {}; X.min = {:.3f}; X.max = {:.3f}".format(
-        X.shape, X.min(), X.max()))
-    print("y.shape = {}; y.min = {:.3f}; y.max = {:.3f}".format(
-        y.shape, y.min(), y.max()))
+    print("X.shape = {}; X.min = {:.3f}; X.max = {:.3f}".format(X.shape, X.min(), X.max()))
+    print("y.shape = {}; y.min = {:.3f}; y.max = {:.3f}".format(y.shape, y.min(), y.max()))
