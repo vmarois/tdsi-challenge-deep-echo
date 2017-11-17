@@ -2,6 +2,7 @@ SimpleITK
 numpy
 matplotlib
 scipy
+Pillow
 pandas
 scikit-image
 scikit-learn
