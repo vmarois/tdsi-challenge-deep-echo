@@ -10,7 +10,7 @@ import numpy as np
 from deepecho import *
 
 data_path = 'data'  # Data path
-sample_patient = 'patient0200'
+sample_patient = 'patient0001'
 img_rows = 96
 img_cols = 96
 
@@ -69,4 +69,4 @@ def plot_sample(model):
 
 if __name__ == '__main__':
     plot_sample(model='dnn')
-    #plot_loss(model='dnn')
+    plot_loss(model='dnn')

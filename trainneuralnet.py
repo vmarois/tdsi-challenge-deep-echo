@@ -14,9 +14,9 @@ from data import load_train_data
 
 # Hyper-parameters
 num_classes = 4  # 4 target features to output
-epochs = 30  # number of training epochs
-start = 0.03  # start value for learning rate
-stop = 0.001  # stop value for learning rate
+epochs = 2000  # number of training epochs
+start = 0.01  # start value for learning rate (cnn model)
+stop = 0.0005  # stop value for learning rate (cnn model)
 
 # input image dimensions
 img_rows, img_cols = 96, 96
@@ -31,12 +31,17 @@ def get_dnn_model():
     model = Sequential()
 
     model.add(Dense(100, input_dim=dnn_input_shape, activation='relu'))
+    model.add(Dropout(0.1))
 
     model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.2))
+
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.3))
 
     model.add(Dense(num_classes))
 
-    sgd = SGD(lr=0.01, momentum=0.9, nesterov=True)
+    sgd = SGD(lr=0.001, momentum=0.95, nesterov=True)
 
     model.compile(loss='mse', optimizer=sgd, metrics=['acc'])
 
@@ -72,7 +77,7 @@ def get_cnn_model():
     model.add(Dense(num_classes))
 
     sgd = SGD(lr=start, momentum=0.9, nesterov=True)
-    model.compile(loss='mse', optimizer=sgd, metrics=['acc'])
+    model.compile(loss='mse', optimizer=sgd, metrics=['acc', 'mae'])
 
     return model
 
@@ -137,5 +142,5 @@ def fit_cnn_model():
 
 
 if __name__ == '__main__':
-    #fit_dnn_model()
-    fit_cnn_model()
+    fit_dnn_model()
+    #fit_cnn_model()
