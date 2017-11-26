@@ -47,7 +47,7 @@ def create_train_data():
 
         # get the center coordinates of the left ventricle (on the resized image)
         row, col = findCenter(img_mask)
-        print('rowCenter, colCenter = ', row, col)
+        print('rowCenter, colCenter = ', row, ',', col)
 
         if isinstance(row, list):  # findCenter might return a list, so we ensure row, col are scalars.
             row = row[0]
@@ -55,7 +55,7 @@ def create_train_data():
 
         # get the orientation of the left ventricle (on the resized image)
         x_v1, y_v1 = findMainOrientation(img_mask, 1)
-        print('xOrientation, yOrientation = ', x_v1, y_v1)
+        print('xOrientation, yOrientation = ', x_v1, ',', y_v1)
 
         # now, save the resized image to the X dataframe as a 96x96 2D-array (which will be the network input)
         images[i] = img
@@ -64,7 +64,7 @@ def create_train_data():
         targets[i] = np.array([row, col, x_v1, y_v1])
 
         i += 1
-        print('Done: {0}/{1} patients'.format(i, len(patients)))
+        print('######### Done: {0}/{1} patients'.format(i, len(patients)))
 
     print('Data processing done.')
     # save both ndarrays to a .npy files (for faster loading later)
@@ -73,7 +73,7 @@ def create_train_data():
     print('Saving to .npy files done.')
 
 
-def load_train_data():
+def load_train_data(model):
 
     print('-' * 30)
     print('Loading & processing data...')
@@ -95,8 +95,12 @@ def load_train_data():
     print('scale target coordinates to [-1, 1]')
     targets[:, 0] = (targets[:, 0] - (img_rows/2))/(img_rows/2)
     targets[:, 1] = (targets[:, 1] - (img_rows / 2)) / (img_cols / 2)
-    #images = images.reshape(-1, 1, 96, 96)
-    images = images.reshape(images.shape[0], img_rows*img_rows)
+
+    # reshape images according to the neural network model intended to be used
+    if model == 'cnn':
+        images = images.reshape(-1, 1, 96, 96)
+    elif model == 'dnn':
+        images = images.reshape(images.shape[0], img_rows*img_rows)
 
     print('-' * 30)
     print('Loading & processing done.')
@@ -106,7 +110,7 @@ def load_train_data():
 
 
 if __name__ == '__main__':
-    #create_train_data()
-    X, y = load_train_data()
-    print("X.shape = {}; X.min = {:.3f}; X.max = {:.3f}".format(X.shape, X.min(), X.max()))
-    print("y.shape = {}; y.min = {:.3f}; y.max = {:.3f}".format(y.shape, y.min(), y.max()))
+    create_train_data()
+    #X, y = load_train_data(model='cnn')
+    #print("X.shape = {}; X.min = {:.3f}; X.max = {:.3f}".format(X.shape, X.min(), X.max()))
+    #print("y.shape = {}; y.min = {:.3f}; y.max = {:.3f}".format(y.shape, y.min(), y.max()))
