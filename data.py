@@ -35,8 +35,8 @@ def create_train_data():
     for patient in patients:
 
         # read image & mask (only focus on ED for now)
-        img, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_ES.mhd'.format(d=data_path, pa=patient))
-        img_mask, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_ES_gt.mhd'.format(d=data_path, pa=patient))
+        img, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_ED.mhd'.format(d=data_path, pa=patient))
+        img_mask, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_ED_gt.mhd'.format(d=data_path, pa=patient))
 
         # extract the region corresponding to the left ventricle in the image mask (region where pixel = 1)
         img_mask = getRoi(img_mask, 1)
@@ -47,6 +47,7 @@ def create_train_data():
 
         # get the center coordinates of the left ventricle (on the resized image)
         row, col = findCenter(img_mask)
+        print('rowCenter, colCenter = ', row, col)
 
         if isinstance(row, list):  # findCenter might return a list, so we ensure row, col are scalars.
             row = row[0]
@@ -54,8 +55,9 @@ def create_train_data():
 
         # get the orientation of the left ventricle (on the resized image)
         x_v1, y_v1 = findMainOrientation(img_mask, 1)
+        print('xOrientation, yOrientation = ', x_v1, y_v1)
 
-        # now, save the resized image to the X dataframe as a row vector (which will be the network input)
+        # now, save the resized image to the X dataframe as a 96x96 2D-array (which will be the network input)
         images[i] = img
 
         # save the center coordinates & orientation to the y dataframe (which will be the output of the network)
@@ -84,15 +86,17 @@ def load_train_data():
     targets = np.load('targets.npy')
 
     # scale image pixel values to [0, 1]
+    print('scale pixel values to [0, 1]')
     images = images.astype(np.float32)
     images /= 255.
 
     # scale target center coordinates to [-1, 1] (from 0 to 95 initially)
     targets = targets.astype(np.float32)
+    print('scale target coordinates to [-1, 1]')
     targets[:, 0] = (targets[:, 0] - (img_rows/2))/(img_rows/2)
-    targets[:, 1] = (targets[:, 1] - (img_cols / 2)) / (img_cols / 2)
-
-    images = images[..., np.newaxis]
+    targets[:, 1] = (targets[:, 1] - (img_rows / 2)) / (img_cols / 2)
+    #images = images.reshape(-1, 1, 96, 96)
+    images = images.reshape(images.shape[0], img_rows*img_rows)
 
     print('-' * 30)
     print('Loading & processing done.')
@@ -102,7 +106,7 @@ def load_train_data():
 
 
 if __name__ == '__main__':
-    # create_train_data()
+    #create_train_data()
     X, y = load_train_data()
     print("X.shape = {}; X.min = {:.3f}; X.max = {:.3f}".format(X.shape, X.min(), X.max()))
     print("y.shape = {}; y.min = {:.3f}; y.max = {:.3f}".format(y.shape, y.min(), y.max()))

@@ -38,19 +38,28 @@ def plot_sample():
 
     img, _, _, _ = acquisition.load_mhd_data('{d}/{p}/{p}_4CH_ES.mhd'.format(d=data_path, p=sample_patient))
     img = resize(img, (img_cols, img_rows), mode='reflect', preserve_range=True)
-    input = img[np.newaxis, ..., np.newaxis]
+    # do not forget to scale image pixel values to [0, 1]
+    img = img.astype(np.float32)
+    img /= 255.
+    input = img.reshape(1, img_rows*img_cols)
+
+    # just to verify, print input shape
+    print(input.shape)
 
     pred = model.predict(input, batch_size=1, verbose=1)
+
+    # get target values (original scaling)
     row = pred[0, 0]*(img_rows/2) + (img_rows/2)
     col = pred[0, 1]*(img_cols/2) + (img_cols/2)
-    x_v1 = pred[0, 1]
+    x_v1 = pred[0, 2]
     y_v1 = pred[0, 3]
 
-    plt.imshow(img, cmap='Greys')
-    plt.show()
+    print('rowCenter, colCenter = ', row, col)
+    print('xOrientation, yOrientation = ', x_v1, y_v1)
 
     plotCenterOrientation(img, (row, col), (x_v1, y_v1))
 
 
 if __name__ == '__main__':
     plot_sample()
+    plot_loss()
