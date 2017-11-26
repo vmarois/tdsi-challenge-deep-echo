@@ -14,14 +14,12 @@ def plotCenterOrientation(image, center, orientation, phase='ED'):
 
     Use : plotCenterOrientation(image, (row, col), (x, y))
     """
-    y, x = np.nonzero(image)
-    scale = 260
-    plt.plot(x, y, color='black')
+    scale = 35
+    plt.imshow(image, cmap='Greys_r')
     plt.plot([center[1] - orientation[0] * scale, center[1] + orientation[0] * scale],
              [center[0] - orientation[1] * scale, center[0] + orientation[1] * scale], color='red')
     plt.plot([center[1] - 1, center[1] + 1], [center[0] - 1, center[0] + 1], color='white')
     plt.axis('equal')
-    plt.gca().invert_yaxis()  # Match the image system with origin at top left
     plt.title('Center & main orientation of the left ventricle')
     plt.show()
 
