@@ -14,7 +14,7 @@ from data import load_train_data
 
 # Hyper-parameters
 num_classes = 4  # 4 target features to output
-epochs = 2000  # number of training epochs
+epochs = 20  # number of training epochs
 start = 0.01  # start value for learning rate (cnn model)
 stop = 0.0005  # stop value for learning rate (cnn model)
 
@@ -31,17 +31,20 @@ def get_dnn_model():
     model = Sequential()
 
     model.add(Dense(100, input_dim=dnn_input_shape, activation='relu'))
-    model.add(Dropout(0.1))
+    #model.add(Dropout(0.1))
 
     model.add(Dense(100, activation='relu'))
-    model.add(Dropout(0.2))
+    #model.add(Dropout(0.2))
 
     model.add(Dense(100, activation='relu'))
-    model.add(Dropout(0.3))
+    #model.add(Dropout(0.3))
+
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.4))
 
     model.add(Dense(num_classes))
 
-    sgd = SGD(lr=0.001, momentum=0.95, nesterov=True)
+    sgd = SGD(lr=0.0001, momentum=0.99, nesterov=True)
 
     model.compile(loss='mse', optimizer=sgd, metrics=['acc'])
 
@@ -55,22 +58,22 @@ def get_cnn_model():
     model.add(Conv2D(32, kernel_size=(3, 3), input_shape=cnn_input_shape))  # should output (32, 94, 94) as 96-3+1 = 94
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))  # # should output (32, 47, 47)
-    model.add(Dropout(0.1))
+    #model.add(Dropout(0.1))
 
     model.add(Conv2D(64, (2, 2)))  # should output (64, 46, 46) as 47-2+1 = 46
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))  # should output (64, 23, 23)
-    model.add(Dropout(0.2))
+    #model.add(Dropout(0.2))
 
     model.add(Conv2D(128, (2, 2)))  # should output (128, 22, 22) as 23-2+1 = 22
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))  # should output (128, 11, 11)
-    model.add(Dropout(0.3))
+    #model.add(Dropout(0.3))
 
     model.add(Flatten())
     model.add(Dense(1000))
     model.add(Activation('relu'))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.3))
 
     model.add(Dense(1000))
     model.add(Activation('relu'))
@@ -85,7 +88,7 @@ def get_cnn_model():
 def fit_dnn_model():
 
     # get data
-    X, y = load_train_data(model='dnn')
+    X, y = load_train_data(model='dnn', data='both')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     # get model
@@ -111,7 +114,7 @@ def fit_dnn_model():
 def fit_cnn_model():
 
     # get data
-    X, y = load_train_data(model='cnn')
+    X, y = load_train_data(model='cnn', data='both')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     # get model
@@ -142,5 +145,5 @@ def fit_cnn_model():
 
 
 if __name__ == '__main__':
-    fit_dnn_model()
-    #fit_cnn_model()
+    #fit_dnn_model()
+    fit_cnn_model()
