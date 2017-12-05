@@ -1,13 +1,17 @@
 # This file is part of tdsi-deep-echo-challenge
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from keras.models import load_model
 from skimage.transform import resize
 
 import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
 
 from deepecho import *
+from data import load_train_data
 
 data_path = 'data'  # Data path
 sample_patient = 'patient0001'
@@ -66,7 +70,49 @@ def plot_sample(model):
 
     plotCenterOrientation(img, (row, col), (x_v1, y_v1))
 
+def boxPlot():
+    """
+    Create a seaborn boxplot comparing DNN & CNN models on the distribution of distance between the predicted center
+    & the ground truth center.
+    :return: None, create seaborn boxplot.
+    """
+    # load saved model
+    dnn_model = load_model('dnn_model.h5')
+    cnn_model = load_model('cnn_model.h5')
+
+    # get data
+    X_dnn, y_dnn = load_train_data(model='dnn', data='both')
+    X_cnn, y_cnn = load_train_data(model='cnn', data='both')
+
+    _, X_test_dnn, _, y_test_dnn = train_test_split(X_dnn, y_dnn, test_size=0.4, random_state=42)
+    _, X_test_cnn, _, y_test_cnn = train_test_split(X_cnn, y_cnn, test_size=0.4, random_state=42)
+
+    # get predictions
+    dnn_pred = dnn_model.predict(X_test_dnn, verbose=0)
+    cnn_pred = cnn_model.predict(X_test_cnn, verbose=0)
+
+    # scale back predicted values
+    arrays = [dnn_pred, cnn_pred, y_test_dnn, y_test_cnn]
+    for array in arrays:
+        array[:, 0] = array[:, 0] * (img_rows / 2) + (img_rows / 2)
+        array[:, 1] = array[:, 1] * (img_cols / 2) + (img_cols / 2)
+
+    # compute distance between predicted center & true center and group result in a pandas dataframe
+    dnn_distance = np.sqrt((y_test_dnn[:, 0] - dnn_pred[:, 0]) ** 2 + (y_test_dnn[:, 1] - dnn_pred[:, 1]) ** 2)
+    cnn_distance = np.sqrt((y_test_cnn[:, 0] - cnn_pred[:, 0]) ** 2 + (y_test_cnn[:, 1] - cnn_pred[:, 1]) ** 2)
+
+    distance = np.concatenate((dnn_distance, cnn_distance))
+    model = np.concatenate((["DNN" for elt in dnn_distance], ["CNN" for elt in cnn_distance]))
+
+    df = pd.DataFrame({'Distance (pixels)': distance, 'Model used': model})
+
+    # generate seaborn boxplot
+    sns.boxplot(x='Model used', y='Distance (pixels)', data=df, orient='v')
+    plt.title('Distribution of predicted distance to true center')
+    plt.show()
+
 
 if __name__ == '__main__':
-    plot_sample(model='dnn')
-    plot_loss(model='dnn')
+    #plot_sample(model='cnn')
+    #plot_loss(model='dnn')
+    boxPlot()
