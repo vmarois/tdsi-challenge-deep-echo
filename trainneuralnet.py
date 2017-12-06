@@ -12,16 +12,18 @@ from sklearn.model_selection import train_test_split
 
 from data import load_train_data
 
-# Hyper-parameters
+#   PARAMETERS  #
 num_classes = 4  # 4 target features to output
-epochs = 20  # number of training epochs
-start = 0.01  # start value for learning rate (cnn model)
-stop = 0.0005  # stop value for learning rate (cnn model)
+epochs = 30  # number of training epochs
+lr_start_cnn = 0.01  # start value for decreasing learning rate (cnn model only)
+lr_stop_cnn = 0.0005  # stop value for decreasing learning rate (cnn model only)
+lr_dnn = 0.0001
 
 # input image dimensions
 img_rows, img_cols = 96, 96
 dnn_input_shape = img_rows * img_cols
 cnn_input_shape = (1, img_rows, img_cols)
+##################
 
 K.set_image_data_format('channels_first')  # Sets the value of the data format convention.
 
@@ -31,20 +33,17 @@ def get_dnn_model():
     model = Sequential()
 
     model.add(Dense(100, input_dim=dnn_input_shape, activation='relu'))
-    #model.add(Dropout(0.1))
 
     model.add(Dense(100, activation='relu'))
-    #model.add(Dropout(0.2))
 
     model.add(Dense(100, activation='relu'))
-    #model.add(Dropout(0.3))
 
     model.add(Dense(100, activation='relu'))
     model.add(Dropout(0.4))
 
     model.add(Dense(num_classes))
 
-    sgd = SGD(lr=0.0001, momentum=0.99, nesterov=True)
+    sgd = SGD(lr=lr_dnn, momentum=0.99, nesterov=True)
 
     model.compile(loss='mse', optimizer=sgd, metrics=['acc'])
 
@@ -58,17 +57,14 @@ def get_cnn_model():
     model.add(Conv2D(32, kernel_size=(3, 3), input_shape=cnn_input_shape))  # should output (32, 94, 94) as 96-3+1 = 94
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))  # # should output (32, 47, 47)
-    #model.add(Dropout(0.1))
 
     model.add(Conv2D(64, (2, 2)))  # should output (64, 46, 46) as 47-2+1 = 46
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))  # should output (64, 23, 23)
-    #model.add(Dropout(0.2))
 
     model.add(Conv2D(128, (2, 2)))  # should output (128, 22, 22) as 23-2+1 = 22
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))  # should output (128, 11, 11)
-    #model.add(Dropout(0.3))
 
     model.add(Flatten())
     model.add(Dense(1000))
@@ -79,15 +75,15 @@ def get_cnn_model():
     model.add(Activation('relu'))
     model.add(Dense(num_classes))
 
-    sgd = SGD(lr=start, momentum=0.9, nesterov=True)
-    model.compile(loss='mse', optimizer=sgd, metrics=['acc', 'mae'])
+    sgd = SGD(lr=lr_start_cnn, momentum=0.9, nesterov=True)
+    model.compile(loss='mse', optimizer=sgd, metrics=['acc'])
 
     return model
 
 
 def fit_dnn_model():
 
-    # get data
+    # get data : can specify if selecting one phase only or both : 'ED', 'ES, 'both'
     X, y = load_train_data(model='dnn', data='both')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
@@ -113,17 +109,17 @@ def fit_dnn_model():
 
 def fit_cnn_model():
 
-    # get data
+    # get data : can specify if selecting one phase only or both : 'ED', 'ES, 'both'
     X, y = load_train_data(model='cnn', data='both')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     # get model
     model = get_cnn_model()
 
-    # initialize dynamic change of learning rate : We start at the value of 'start' and decrease it every epoch to get
-    # to the final value of 'stop'
+    # initialize dynamic change of learning rate : We start at the value of 'lr_start_cnn' and decrease it every epoch
+    # to get to the final value of 'lr_stop_cnn'
     # initialize early stop : stop training if the monitored metric does not change for 'patience' epochs
-    learning_rate = np.linspace(start, stop, epochs)
+    learning_rate = np.linspace(lr_start_cnn, lr_stop_cnn, epochs)
     change_lr = LearningRateScheduler(lambda epoch: float(learning_rate[epoch]))
     early_stop = EarlyStopping(monitor='loss', patience=10)
 
@@ -145,5 +141,5 @@ def fit_cnn_model():
 
 
 if __name__ == '__main__':
-    #fit_dnn_model()
-    fit_cnn_model()
+    fit_dnn_model()
+    #fit_cnn_model()
