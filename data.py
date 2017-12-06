@@ -74,7 +74,7 @@ def create_train_data(phase='ED', img_rows=96, img_cols=96, verbose=1):
             # print some info
             print('[{}] rowCenter, colCenter = '.format(phase), row, ',', col)
             print('[{}] xOrientation, yOrientation = '.format(phase), x_v1, ',', y_v1)
-            print('######### Done: {0}/{1} patients'.format(idx, len(patients)))
+            print('######### Done: {0}/{1} patients'.format(idx+1, len(patients)))
 
     print('Data processing done.')
     # save both ndarrays to a .npy files (for faster loading later)
@@ -83,34 +83,34 @@ def create_train_data(phase='ED', img_rows=96, img_cols=96, verbose=1):
     print('Saving to .npy files done.')
 
 
-def create_train_data_2():
+def create_train_data_2(img_rows=96, img_cols=96, verbose=1):
     """
     Creating training data. Using both ED & ES images. We are only stacking them together for now, and not passing
     both phases at the same time in the neural network (reading 1 image at the time).
-    :return: Resized images to 96 x96 & targets values in .npy files.
+    :param img_rows: the new x-axis dimension used to resize the images
+    :param img_cols: the new y-axis dimension used to resize the images
+    :param verbose: control the display of additional information.
+    :return: Resized images to (img_rows, img_cols) & targets values in .npy files.
     """
+    print("Creating training data using raw data from both phases")
     # first, get the patients directory names located in the 'data_path' folder. These names (e.g. 'patient0001') will
     # be used for indexing.
     patients = [name for name in os.listdir(os.path.join(os.curdir, data_path)) if not name.startswith('.')]
     # We sort this list to get the patients id in increasing order
-    patients.sort(key=lambda s: s[-3:])
+    patients.sort(key=lambda s: s[-3:])  # sort according to last 3 characters
 
-    # create an empty numpy.ndarray which will contain the images (resized as 96x96)
-    images = np.ndarray((2*len(patients), img_rows, img_cols), dtype=np.uint8)  # x 2 in len as storing ED & ES
+    # create an empty numpy.ndarray which will contain the images (resized to (img_rows, img_cols))
+    images = np.ndarray((2 * len(patients), img_rows, img_cols), dtype=np.uint8)  # x 2 in len as storing ED & ES
 
     # create a second empty numpy.ndarray which will contain the center coord. & orientation values for each patient
     # for both phases.
     # We have 4 main features : rowCenter, colCenter, xOrientation, yOrientation (stored in that order).
-    targets = np.ndarray((2*len(patients), 4), dtype=np.float32)
+    targets = np.ndarray((2 * len(patients), 4), dtype=np.float32)
 
     # define iterable containing the different phases
     phases = ['ED', 'ES']
 
-    i = 0
-    print('-' * 30)
-    print('Creating training images & targets features...')
-    print('-' * 30)
-
+    idx = 0
     # we now go through each patient's directory :
     for patient in patients:
 
@@ -123,7 +123,7 @@ def create_train_data_2():
             # extract the region corresponding to the left ventricle in the image mask (region where pixel = 1)
             img_mask = getRoi(img_mask, 1)
 
-            # resize the img & the mask to 96x96 to keep the network input manageable
+            # resize the img & the mask to (img_rows, img_cols) to keep the network input manageable
             img = resize(img, (img_cols, img_rows), mode='reflect', preserve_range=True)
             img_mask = resize(img_mask, (img_cols, img_rows), mode='reflect', preserve_range=True)
 
@@ -137,17 +137,20 @@ def create_train_data_2():
             # get the orientation of the left ventricle (on the resized image)
             x_v1, y_v1 = findMainOrientation(img_mask, 1)
 
-            print('[{}] rowCenter, colCenter = '.format(phase), row, ',', col)
-            print('[{}] xOrientation, yOrientation = '.format(phase), x_v1, ',', y_v1)
-
             # now, save the resized image to the X dataframe as a 96x96 2D-array (which will be the network input)
-            images[i] = img
+            images[idx] = img
 
             # save the center coordinates & orientation to the y dataframe (which will be the output of the network)
-            targets[i] = np.array([row, col, x_v1, y_v1])
+            targets[idx] = np.array([row, col, x_v1, y_v1])
 
-            i += 1
-        print('######### Done: {0}/{1} patients'.format(round(i / 2), len(patients)))
+            idx += 1
+            if verbose:
+                # print some info
+                print('[{}] rowCenter, colCenter = '.format(phase), row, ',', col)
+                print('[{}] xOrientation, yOrientation = '.format(phase), x_v1, ',', y_v1)
+
+        if verbose:
+            print('######### Done: {0}/{1} patients'.format(round(idx/2), len(patients)))
 
     print('Data processing done.')
     # save both ndarrays to a .npy files (for faster loading later)
@@ -213,7 +216,7 @@ def load_train_data(model, data):
 
 if __name__ == '__main__':
     create_train_data(phase=phase, img_rows=img_rows, img_cols=img_cols, verbose=0)
-    #create_train_data_2()
-    X, y = load_train_data(model='dnn', data='ED')
-    print("X.shape = {}".format(X.shape))
-    print("y.shape = {}".format(y.shape))
+    create_train_data_2(img_rows=img_rows, img_cols=img_cols, verbose=1)
+    #X, y = load_train_data(model='dnn', data='both')
+    #print("X.shape = {}".format(X.shape))
+    #print("y.shape = {}".format(y.shape))
