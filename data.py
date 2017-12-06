@@ -162,17 +162,14 @@ def create_train_data_2(img_rows=96, img_cols=96, verbose=1):
 def load_train_data(model, data):
     """
     Loading training data & doing some additional preprocessing on it. If the indicated model is a dnn, we flatten out
-    the input images.
-    :param model: string to indicate the type of model to prepare the data for. Either dnn or cnn
+    the input images. If the indicated model is a cnn, we put the channels first.
+    :param model: string to indicate the type of model to prepare the data for. Either 'dnn' or 'cnn'
     :param data: Indicates which data to load (i.e data from both phases or from a specific one). Either 'ED', 'ES'
     or 'both'.
     :return: images & target features as numpy arrays.
     """
-
-    print('-' * 30)
-    print('Loading & processing data for {} phase'.format(data))
-    print('-' * 30)
-
+    print('#' * 30)
+    print('Loading data from file. Selecting {} phase.'.format(data))
     dataname = ''
 
     if data == 'ED':
@@ -189,34 +186,32 @@ def load_train_data(model, data):
     targets = np.load(dataname.format('targets'))
 
     # scale image pixel values to [0, 1]
-    print('scale pixel values to [0, 1]')
     images = images.astype(np.float32)
     images /= 255.
 
     # scale target center coordinates to [-1, 1] (from 0 to 95 initially)
     targets = targets.astype(np.float32)
-    print('scale target coordinates to [-1, 1]')
-    targets[:, 0] = (targets[:, 0] - (img_rows/2))/(img_rows/2)
+    targets[:, 0] = (targets[:, 0] - (img_rows / 2)) / (img_rows / 2)
     targets[:, 1] = (targets[:, 1] - (img_rows / 2)) / (img_cols / 2)
 
     # reshape images according to the neural network model intended to be used
     if model == 'cnn':
-        print('indicated model is a cnn, reshaping images with channels first.')
+        print('Indicated model is a CNN, reshaping images with channels first.')
         images = images.reshape(-1, 1, 96, 96)
     elif model == 'dnn':
-        print('indicated model is a dnn, flattening out images.')
+        print('Indicated model is a DNN, flattening out images.')
         images = images.reshape(images.shape[0], img_rows*img_rows)
 
-    print('-' * 30)
-    print('Loading & processing done.')
-    print('-' * 30)
+    print('Loading & processing done. Pixel image values have been scaled to [0, 1],'
+          'and target center coordinates to [-1, 1].')
+    print('#' * 30)
 
     return images, targets
 
 
 if __name__ == '__main__':
-    create_train_data(phase=phase, img_rows=img_rows, img_cols=img_cols, verbose=0)
-    create_train_data_2(img_rows=img_rows, img_cols=img_cols, verbose=1)
-    #X, y = load_train_data(model='dnn', data='both')
-    #print("X.shape = {}".format(X.shape))
-    #print("y.shape = {}".format(y.shape))
+    #create_train_data(phase=phase, img_rows=img_rows, img_cols=img_cols, verbose=0)
+    #create_train_data_2(img_rows=img_rows, img_cols=img_cols, verbose=0)
+    X, y = load_train_data(model='dnn', data='ES')
+    print("X.shape = {}".format(X.shape))
+    print("y.shape = {}".format(y.shape))
