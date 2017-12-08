@@ -42,19 +42,20 @@ def plot_loss(model):
     plt.show()
 
 
-def plot_sample(model, sample, datapath='data/'):
+def plot_sample(model, sample, datapath='data/', phase='ED'):
     """
     Plot the predicted center & main orientation on a sample image.
     :param model: the model to use, either 'cnn' or 'dnn'
     :param sample: the sample image filename
     :param datapath: the datapath where sample is located
+    :param phase: indicates which phase to select, either 'ED' or 'ES'
     :return: a matplotlib.pyplot showing predicted center & main orientation on sample image.
     """
     # load saved model
     saved_model = load_model('{}_model.h5'.format(model))
 
     # get sample image
-    img, _, _, _ = acquisition.load_mhd_data('{d}/{p}/{p}_4CH_ES.mhd'.format(d=datapath, p=sample))
+    img, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}.mhd'.format(d=datapath, pa=sample, ph=phase))
     # resize it to (img_cols, img_rows)
     img = resize(img, (img_cols, img_rows), mode='reflect', preserve_range=True)
 
@@ -86,7 +87,7 @@ def boxPlot():
     """
     Create a seaborn boxplot comparing DNN & CNN models on the distribution of distance between the predicted center
     & the ground truth center.
-    :return: None, create seaborn boxplot.
+    :return: None, create a seaborn boxplot.
     """
     distance = []
     label = []
@@ -121,6 +122,6 @@ def boxPlot():
 
 
 if __name__ == '__main__':
-    #plot_sample(model='cnn', sample=sample_patient, datapath=datapath)
-    #plot_loss(model='cnn')
+    plot_sample(model='cnn', sample=sample_patient, datapath=datapath, phase='ES')
+    plot_loss(model='dnn')
     boxPlot()
