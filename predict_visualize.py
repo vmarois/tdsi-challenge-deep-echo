@@ -13,35 +13,49 @@ from sklearn.model_selection import train_test_split
 from deepecho import *
 from data import load_train_data
 
-data_path = 'data'  # Data path
-sample_patient = 'patient0001'
+#   PARAMETERS  #
+datapath = 'data'  # Data path
+sample_patient = 'patient0001'  # filename for plot_sample()
 img_rows = 96
 img_cols = 96
+#################
 
 
 def plot_loss(model):
+    """
+    Generate a matplotlib.pyplot of the metrics evolution during the model training.
+    :param model: the model to select, either 'cnn' or 'dnn'
+    :return: display a matplotlib.pyplot
+    """
+    # load data
     loss = np.loadtxt('{}_model_loss.csv'.format(model))
     acc = np.loadtxt('{}_model_acc.csv'.format(model))
 
-    plt.plot(loss, linewidth=3, label='loss')
-    plt.plot(acc, linewidth=3, label='training accuracy')
+    # create plot & display it
+    plt.plot(loss, linewidth=2, label='Training Loss (mse)')
+    plt.plot(acc, linewidth=2, label='Training accuracy')
     plt.grid()
+    plt.title('Metrics evolution during epochs for {} model'.format(model.upper()))
     plt.legend()
-    plt.xlabel('epoch')
-    plt.ylabel('metrics')
+    plt.xlabel('Epochs')
+    plt.ylabel('Metrics')
     plt.show()
 
 
-def plot_sample(model):
-
+def plot_sample(model, sample, datapath='data/'):
+    """
+    Plot the predicted center & main orientation on a sample image.
+    :param model: the model to use, either 'cnn' or 'dnn'
+    :param sample: the sample image filename
+    :param datapath: the datapath where sample is located
+    :return: a matplotlib.pyplot showing predicted center & main orientation on sample image.
+    """
     # load saved model
-    print('-' * 30)
-    print('Load model from file')
-    print('-' * 30)
     saved_model = load_model('{}_model.h5'.format(model))
 
     # get sample image
-    img, _, _, _ = acquisition.load_mhd_data('{d}/{p}/{p}_4CH_ES.mhd'.format(d=data_path, p=sample_patient))
+    img, _, _, _ = acquisition.load_mhd_data('{d}/{p}/{p}_4CH_ES.mhd'.format(d=datapath, p=sample))
+    # resize it to (img_cols, img_rows)
     img = resize(img, (img_cols, img_rows), mode='reflect', preserve_range=True)
 
     # scale image pixel values to [0, 1]
@@ -50,25 +64,23 @@ def plot_sample(model):
 
     # reshape input according to loaded model
     if model == 'dnn':
-        input = img.reshape(1, img_rows*img_cols)
+        inputimg = img.reshape(1, img_rows*img_cols)
     elif model == 'cnn':
-        input = img.reshape(-1, 1, 96, 96)
+        inputimg = img.reshape(-1, 1, 96, 96)
 
-    # just to verify, print input shape
-    print(input.shape)
-
-    pred = saved_model.predict(input, batch_size=1, verbose=1)
+    prediction = saved_model.predict(inputimg, batch_size=1, verbose=1)
 
     # get target values (original scaling)
-    row = pred[0, 0]*(img_rows/2) + (img_rows/2)
-    col = pred[0, 1]*(img_cols/2) + (img_cols/2)
-    x_v1 = pred[0, 2]
-    y_v1 = pred[0, 3]
+    row = prediction[0, 0]*(img_rows/2) + (img_rows/2)
+    col = prediction[0, 1]*(img_cols/2) + (img_cols/2)
+    x_v1 = prediction[0, 2]
+    y_v1 = prediction[0, 3]
 
-    print('rowCenter, colCenter = ', row, col)
-    print('xOrientation, yOrientation = ', x_v1, y_v1)
+    print('Predicted rowCenter, colCenter = ', row, col)
+    print('Predicted xOrientation, yOrientation = ', x_v1, y_v1)
 
     plotCenterOrientation(img, (row, col), (x_v1, y_v1))
+
 
 def boxPlot():
     """
@@ -76,35 +88,31 @@ def boxPlot():
     & the ground truth center.
     :return: None, create seaborn boxplot.
     """
-    # load saved model
-    dnn_model = load_model('dnn_model.h5')
-    cnn_model = load_model('cnn_model.h5')
+    distance = []
+    label = []
+    for net in ['dnn', 'cnn']:
+        # load saved model
+        model = load_model('{}_model.h5'.format(net))
 
-    # get data
-    X_dnn, y_dnn = load_train_data(model='dnn', data='both')
-    X_cnn, y_cnn = load_train_data(model='cnn', data='both')
+        # get data
+        X, y = load_train_data(model=net, data='both')
+        _, X_test, _, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
 
-    _, X_test_dnn, _, y_test_dnn = train_test_split(X_dnn, y_dnn, test_size=0.4, random_state=42)
-    _, X_test_cnn, _, y_test_cnn = train_test_split(X_cnn, y_cnn, test_size=0.4, random_state=42)
+        # get predictions
+        net_pred = model.predict(X_test, verbose=0)
 
-    # get predictions
-    dnn_pred = dnn_model.predict(X_test_dnn, verbose=0)
-    cnn_pred = cnn_model.predict(X_test_cnn, verbose=0)
+        # ground truth & predicted center coordinates are in [-1,1], scaling them back to [0, img_rows] to compute
+        # the distance in pixels
+        for array in [net_pred, y_test]:
+            array[:, 0] = array[:, 0] * (img_rows / 2) + (img_rows / 2)
+            array[:, 1] = array[:, 1] * (img_cols / 2) + (img_cols / 2)
 
-    # scale back predicted values
-    arrays = [dnn_pred, cnn_pred, y_test_dnn, y_test_cnn]
-    for array in arrays:
-        array[:, 0] = array[:, 0] * (img_rows / 2) + (img_rows / 2)
-        array[:, 1] = array[:, 1] * (img_cols / 2) + (img_cols / 2)
+        # compute distance between predicted center & true center and group result in a pandas dataframe
+        net_distance = np.sqrt((y_test[:, 0] - net_pred[:, 0]) ** 2 + (y_test[:, 1] - net_pred[:, 1]) ** 2)
+        distance = np.concatenate((distance, net_distance))
+        label += [net.upper()] * net_distance.shape[0]
 
-    # compute distance between predicted center & true center and group result in a pandas dataframe
-    dnn_distance = np.sqrt((y_test_dnn[:, 0] - dnn_pred[:, 0]) ** 2 + (y_test_dnn[:, 1] - dnn_pred[:, 1]) ** 2)
-    cnn_distance = np.sqrt((y_test_cnn[:, 0] - cnn_pred[:, 0]) ** 2 + (y_test_cnn[:, 1] - cnn_pred[:, 1]) ** 2)
-
-    distance = np.concatenate((dnn_distance, cnn_distance))
-    model = np.concatenate((["DNN" for elt in dnn_distance], ["CNN" for elt in cnn_distance]))
-
-    df = pd.DataFrame({'Distance (pixels)': distance, 'Model used': model})
+    df = pd.DataFrame({'Distance (pixels)': distance, 'Model used': label})
 
     # generate seaborn boxplot
     sns.boxplot(x='Model used', y='Distance (pixels)', data=df, orient='v')
@@ -113,6 +121,6 @@ def boxPlot():
 
 
 if __name__ == '__main__':
-    #plot_sample(model='cnn')
-    #plot_loss(model='dnn')
+    #plot_sample(model='cnn', sample=sample_patient, datapath=datapath)
+    #plot_loss(model='cnn')
     boxPlot()
