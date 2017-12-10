@@ -85,7 +85,7 @@ def get_cnn_model():
 def fit_dnn_model():
 
     # get data : can specify if selecting one phase only or both : 'ED', 'ES, 'both'
-    X, y = load_train_data(model='dnn', data='both')
+    X, y = load_train_data(model='dnn', data='both',img_rows=img_rows, img_cols=img_cols)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     # get model
@@ -120,7 +120,7 @@ def fit_dnn_model():
 def fit_cnn_model():
 
     # get data : can specify if selecting one phase only or both : 'ED', 'ES, 'both'
-    X, y = load_train_data(model='cnn', data='both')
+    X, y = load_train_data(model='cnn', data='both', img_rows=img_rows, img_cols=img_cols)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
     # get model

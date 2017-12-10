@@ -167,13 +167,15 @@ def create_train_data_2(img_rows=96, img_cols=96, verbose=1):
     print('Saving to .npy files done.')
 
 
-def load_train_data(model, data):
+def load_train_data(model, data, img_rows=96, img_cols=96):
     """
     Loading training data & doing some additional preprocessing on it. If the indicated model is a dnn, we flatten out
     the input images. If the indicated model is a cnn, we put the channels first.
     :param model: string to indicate the type of model to prepare the data for. Either 'dnn' or 'cnn'
     :param data: Indicates which data to load (i.e data from both phases or from a specific one). Either 'ED', 'ES'
     or 'both'.
+    :param img_rows: the new x-axis dimension used to resize the images
+    :param img_cols: the new y-axis dimension used to resize the images
     :return: images & target features as numpy arrays.
     """
     print('#' * 30)
@@ -220,6 +222,6 @@ def load_train_data(model, data):
 if __name__ == '__main__':
     #create_train_data(phase=phase, img_rows=img_rows, img_cols=img_cols, verbose=0)
     create_train_data_2(img_rows=img_rows, img_cols=img_cols, verbose=0)
-    X, y = load_train_data(model='cnn', data='both')
+    X, y = load_train_data(model='cnn', data='both', img_rows=img_rows, img_cols=img_cols)
     print("X.shape = {}".format(X.shape))
     print("y.shape = {}".format(y.shape))
