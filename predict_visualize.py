@@ -16,8 +16,8 @@ from data import load_train_data
 #   PARAMETERS  #
 datapath = 'data'  # Data path
 sample_patient = 'patient0001'  # filename for plot_sample()
-img_rows = 96
-img_cols = 96
+img_rows = 128
+img_cols = 128
 #################
 
 
@@ -56,8 +56,17 @@ def plot_sample(model, sample, datapath='data/', phase='ED'):
 
     # get sample image
     img, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}.mhd'.format(d=datapath, pa=sample, ph=phase))
+
+    # get associated mask
+    img_mask, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}_gt.mhd'.format(d=datapath, pa=sample, ph=phase))
+
     # resize it to (img_cols, img_rows)
     img = resize(img, (img_cols, img_rows), mode='reflect', preserve_range=True)
+    img_mask = resize(img_mask, (img_cols, img_rows), mode='reflect', preserve_range=True)
+
+    # get roi & find 'true' center
+    img_mask = getRoi(img_mask, 1)
+    true_row, true_col = findCenter(img_mask)
 
     # scale image pixel values to [0, 1]
     img = img.astype(np.float32)
@@ -67,20 +76,44 @@ def plot_sample(model, sample, datapath='data/', phase='ED'):
     if model == 'dnn':
         inputimg = img.reshape(1, img_rows*img_cols)
     elif model == 'cnn':
-        inputimg = img.reshape(-1, 1, 96, 96)
+        inputimg = img.reshape(-1, 1, img_rows, img_cols)
 
+    # get prediction on input image
     prediction = saved_model.predict(inputimg, batch_size=1, verbose=1)
 
     # get target values (original scaling)
-    row = prediction[0, 0]*(img_rows/2) + (img_rows/2)
-    col = prediction[0, 1]*(img_cols/2) + (img_cols/2)
+    pred_row = prediction[0, 0]*(img_rows/2) + (img_rows/2)
+    pred_col = prediction[0, 1]*(img_cols/2) + (img_cols/2)
     x_v1 = prediction[0, 2]
     y_v1 = prediction[0, 3]
 
-    print('Predicted rowCenter, colCenter = ', row, col)
+    # print some info
+    print('True rowCenter, colCenter = ', true_row, true_col)
+    print('Predicted rowCenter, colCenter = ', int(pred_row), int(pred_col))
     print('Predicted xOrientation, yOrientation = ', x_v1, y_v1)
 
-    plotCenterOrientation(img, (row, col), (x_v1, y_v1))
+    scale = 35
+    # plot resized image
+    plt.imshow(img, cmap='Greys_r')
+    # plot orientation line passing through predicted center
+    plt.plot([pred_col - x_v1 * scale, pred_col + x_v1 * scale],
+             [pred_row - y_v1 * scale, pred_row + y_v1 * scale],
+             color='white')
+
+    fig = plt.gcf()
+    ax = fig.gca()
+
+    # plot predicted center
+    pred_center = plt.Circle((pred_col, pred_row), 1, color='red')
+    ax.add_artist(pred_center)
+    ax.add_artist(pred_center)
+    # plot true center
+    true_center = plt.Circle((true_col, true_row), 1, color='black')
+    ax.add_artist(true_center)
+
+    plt.axis('equal')
+    plt.title('True & predicted center +  predicted orientation. Model = {} '.format(model.upper()))
+    plt.show()
 
 
 def boxPlot():
@@ -122,6 +155,6 @@ def boxPlot():
 
 
 if __name__ == '__main__':
-    plot_sample(model='cnn', sample=sample_patient, datapath=datapath, phase='ES')
-    plot_loss(model='dnn')
-    boxPlot()
+    plot_sample(model='dnn', sample=sample_patient, datapath=datapath, phase='ES')
+    #plot_loss(model='dnn')
+    #boxPlot()
