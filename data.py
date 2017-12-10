@@ -197,7 +197,7 @@ def load_train_data(model, data):
     # reshape images according to the neural network model intended to be used
     if model == 'cnn':
         print('Indicated model is a CNN, reshaping images with channels first.')
-        images = images.reshape(-1, 1, 96, 96)
+        images = images.reshape(-1, 1, img_rows, img_cols)
     elif model == 'dnn':
         print('Indicated model is a DNN, flattening out images.')
         images = images.reshape(images.shape[0], img_rows*img_rows)
