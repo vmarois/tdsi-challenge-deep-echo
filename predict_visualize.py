@@ -8,6 +8,7 @@ from skimage.transform import resize
 
 import numpy as np
 import pandas as pd
+import os
 from sklearn.model_selection import train_test_split
 
 from deepecho import *
@@ -15,9 +16,9 @@ from data import load_train_data
 
 #   PARAMETERS  #
 datapath = 'data'  # Data path
-sample_patient = 'patient0001'  # filename for plot_sample()
-img_rows = 128
-img_cols = 128
+sample_patient = 'patient0100'  # filename for plot_sample()
+img_rows = 96
+img_cols = 96
 #################
 
 
@@ -28,18 +29,25 @@ def plot_loss(model):
     :return: display a matplotlib.pyplot
     """
     # load data
-    loss = np.loadtxt('{}_model_loss.csv'.format(model))
-    acc = np.loadtxt('{}_model_acc.csv'.format(model))
+    loss = np.loadtxt('output/metrics_evolution/{}_model_loss_{}.csv'.format(model, img_rows))
+    acc = np.loadtxt('output/metrics_evolution/{}_model_acc_{}.csv'.format(model, img_rows))
 
     # create plot & display it
     plt.plot(loss, linewidth=2, label='Training Loss (mse)')
     plt.plot(acc, linewidth=2, label='Training accuracy')
     plt.grid()
-    plt.title('Metrics evolution during epochs for {} model'.format(model.upper()))
+    plt.title('Metrics evolution during epochs for {} model. Input image size = {}'.format(model.upper(), img_rows))
     plt.legend()
     plt.xlabel('Epochs')
     plt.ylabel('Metrics')
-    plt.show()
+
+    # Create directory to store pdf files.
+    directory = os.path.join(os.getcwd(), 'output/plots/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    plt.savefig("output/plots/metrics_evolution_{m}_{i}.pdf".format(m=model.upper(), i=img_rows), bbox_inches='tight')
+    print('Metrics evolution plot saved to file.')
+    plt.clf()
 
 
 def plot_sample(model, sample, datapath='data/', phase='ED'):
@@ -52,7 +60,7 @@ def plot_sample(model, sample, datapath='data/', phase='ED'):
     :return: a matplotlib.pyplot showing predicted center & main orientation on sample image.
     """
     # load saved model
-    saved_model = load_model('{}_model.h5'.format(model))
+    saved_model = load_model('output/models/{}_model_{}.h5'.format(model, img_rows))
 
     # get sample image
     img, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}.mhd'.format(d=datapath, pa=sample, ph=phase))
@@ -112,8 +120,16 @@ def plot_sample(model, sample, datapath='data/', phase='ED'):
     ax.add_artist(true_center)
 
     plt.axis('equal')
-    plt.title('True & predicted center +  predicted orientation. Model = {} '.format(model.upper()))
-    plt.show()
+    plt.title('True & predicted center +  predicted orientation.'
+              ' Model = {} , Phase = {}'.format(model.upper(), phase))
+
+    # Create directory to store pdf files.
+    directory = os.path.join(os.getcwd(), 'output/plots/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    plt.savefig("output/plots/sample_image_{m}_{i}_{p}.pdf".format(m=model.upper(), i=img_rows, p=phase), bbox_inches='tight')
+    print('Sample image plot saved to file.')
+    plt.clf()
 
 
 def boxPlot():
@@ -126,7 +142,7 @@ def boxPlot():
     label = []
     for net in ['dnn', 'cnn']:
         # load saved model
-        model = load_model('{}_model.h5'.format(net))
+        model = load_model('output/models/{}_model_{}.h5'.format(net, img_rows))
 
         # get data
         X, y = load_train_data(model=net, data='both')
@@ -143,6 +159,7 @@ def boxPlot():
 
         # compute distance between predicted center & true center and group result in a pandas dataframe
         net_distance = np.sqrt((y_test[:, 0] - net_pred[:, 0]) ** 2 + (y_test[:, 1] - net_pred[:, 1]) ** 2)
+        print('{} average distance error : '.format(net.upper()), np.mean((net_distance)))
         distance = np.concatenate((distance, net_distance))
         label += [net.upper()] * net_distance.shape[0]
 
@@ -150,11 +167,17 @@ def boxPlot():
 
     # generate seaborn boxplot
     sns.boxplot(x='Model used', y='Distance (pixels)', data=df, orient='v')
-    plt.title('Distribution of predicted distance to true center')
-    plt.show()
+    plt.title('Distribution of predicted distance to true center. Input image size = {}'.format(img_rows))
+
+    # Create directory to store pdf files.
+    directory = os.path.join(os.getcwd(), 'output/plots/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    plt.savefig("output/plots/distance_center_boxplot_{}.pdf".format(img_rows), bbox_inches='tight')
+    plt.clf()
 
 
 if __name__ == '__main__':
-    plot_sample(model='dnn', sample=sample_patient, datapath=datapath, phase='ES')
+    #plot_sample(model='dnn', sample=sample_patient, datapath=datapath, phase='ES')
     #plot_loss(model='dnn')
-    #boxPlot()
+    boxPlot()

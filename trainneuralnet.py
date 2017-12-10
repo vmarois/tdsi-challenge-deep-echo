@@ -1,6 +1,7 @@
 # This file is part of tdsi-deep-echo-challenge
 
 import numpy as np
+import os
 
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, Dropout, Conv2D, MaxPooling2D, Activation
@@ -14,7 +15,7 @@ from data import load_train_data
 
 #   PARAMETERS  #
 num_classes = 4  # 4 target features to output
-epochs = 30  # number of training epochs
+epochs = 35  # number of training epochs
 lr_start_cnn = 0.01  # start value for decreasing learning rate (cnn model only)
 lr_stop_cnn = 0.0005  # stop value for decreasing learning rate (cnn model only)
 lr_dnn = 0.0001
@@ -98,12 +99,21 @@ def fit_dnn_model():
     print('Test mean squared error:', score[0])
     print('Test accuracy:', score[1])
 
-    # save metrics evolution
-    np.savetxt('dnn_model_loss.csv', hist.history['loss'])
-    np.savetxt('dnn_model_acc.csv', hist.history['acc'])
+    # Create directory to store metrics evolution to file.
+    directory = os.path.join(os.getcwd(), 'output/metrics_evolution/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
+    # save metrics evolution
+    np.savetxt('output/metrics_evolution/dnn_model_loss_{}.csv'.format(img_rows), hist.history['loss'])
+    np.savetxt('output/metrics_evolution/dnn_model_acc_{}.csv'.format(img_rows), hist.history['acc'])
+
+    # Create directory to store model to file.
+    directory = os.path.join(os.getcwd(), 'output/models/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     # save model
-    model.save('dnn_model.h5')
+    model.save('output/models/dnn_model_{}.h5'.format(img_rows))
     print('dnn model saved to .h5 file.')
 
 
@@ -131,15 +141,23 @@ def fit_cnn_model():
     print('Test mean squared error:', score[0])
     print('Test accuracy:', score[1])
 
+    # Create directory to store metrics evolution to file.
+    directory = os.path.join(os.getcwd(), 'output/metrics_evolution/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     # save metrics evolution
-    np.savetxt('cnn_model_loss.csv', hist.history['loss'])
-    np.savetxt('cnn_model_acc.csv', hist.history['acc'])
+    np.savetxt('output/metrics_evolution/cnn_model_loss_{}.csv'.format(img_rows), hist.history['loss'])
+    np.savetxt('output/metrics_evolution/cnn_model_acc_{}.csv'.format(img_rows), hist.history['acc'])
 
+    # Create directory to store model to file.
+    directory = os.path.join(os.getcwd(), 'output/models/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     # save model
-    model.save('cnn_model.h5')
+    model.save('output/models/cnn_model_{}.h5'.format(img_rows))
     print('cnn model saved to .h5 file.')
 
 
 if __name__ == '__main__':
-    fit_dnn_model()
-    #fit_cnn_model()
+    #fit_dnn_model()
+    fit_cnn_model()

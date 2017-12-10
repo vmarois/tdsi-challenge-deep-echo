@@ -10,7 +10,7 @@ from deepecho import *
 
 #   PARAMETERS  #
 data_path = 'data/'  # Data path
-phase = 'ES'  # select phase for create_train_data()
+phase = 'ED'  # select phase for create_train_data()
 img_rows = 96  # New dimensions when resizing the images
 img_cols = 96
 #################
@@ -78,8 +78,12 @@ def create_train_data(phase='ED', img_rows=96, img_cols=96, verbose=1):
 
     print('Data processing done.')
     # save both ndarrays to a .npy files (for faster loading later)
-    np.save('images_phase_{}.npy'.format(phase), images)
-    np.save('targets_phase_{}.npy'.format(phase), targets)
+    # Create directory to store pdf files.
+    directory = os.path.join(os.getcwd(), 'output/processed_data/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    np.save('output/processed_data/images_phase_{}_{}.npy'.format(phase, img_rows), images)
+    np.save('output/processed_data/targets_phase_{}_{}.npy'.format(phase, img_rows), targets)
     print('Saving to .npy files done.')
 
 
@@ -154,8 +158,12 @@ def create_train_data_2(img_rows=96, img_cols=96, verbose=1):
 
     print('Data processing done.')
     # save both ndarrays to a .npy files (for faster loading later)
-    np.save('images_both_phases.npy', images)
-    np.save('targets_both_phases.npy', targets)
+    # Create directory to store files.
+    directory = os.path.join(os.getcwd(), 'output/processed_data/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    np.save('output/processed_data/images_both_phases_{}.npy'.format(img_rows), images)
+    np.save('output/processed_data/targets_both_phases_{}.npy'.format(img_rows), targets)
     print('Saving to .npy files done.')
 
 
@@ -173,17 +181,17 @@ def load_train_data(model, data):
     dataname = ''
 
     if data == 'ED':
-        dataname = '{}_phase_ED.npy'
+        dataname = 'output/processed_data/{}_phase_ED_{}.npy'
     elif data == 'ES':
-        dataname = '{}_phase_ES.npy'
+        dataname = 'output/processed_data/{}_phase_ES_{}.npy'
     elif data == 'both':
-        dataname = '{}_both_phases.npy'
+        dataname = 'output/processed_data/{}_both_phases_{}.npy'
 
     # read in the .npy file containing the images
-    images = np.load(dataname.format('images'))
+    images = np.load(dataname.format('images', img_rows))
 
     # read in the .npy file containing the target features
-    targets = np.load(dataname.format('targets'))
+    targets = np.load(dataname.format('targets', img_rows))
 
     # scale image pixel values to [0, 1]
     images = images.astype(np.float32)
@@ -211,7 +219,7 @@ def load_train_data(model, data):
 
 if __name__ == '__main__':
     #create_train_data(phase=phase, img_rows=img_rows, img_cols=img_cols, verbose=0)
-    #create_train_data_2(img_rows=img_rows, img_cols=img_cols, verbose=0)
-    X, y = load_train_data(model='dnn', data='ES')
+    create_train_data_2(img_rows=img_rows, img_cols=img_cols, verbose=0)
+    X, y = load_train_data(model='cnn', data='both')
     print("X.shape = {}".format(X.shape))
     print("y.shape = {}".format(y.shape))

@@ -15,4 +15,5 @@
 bin/
 development/
 __pycache__/
+output/
 .idea/
