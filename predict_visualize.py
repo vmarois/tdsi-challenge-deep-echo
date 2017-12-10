@@ -8,6 +8,7 @@ from skimage.transform import resize
 
 import numpy as np
 import pandas as pd
+import math
 import os
 from sklearn.model_selection import train_test_split
 
@@ -17,8 +18,8 @@ from data import load_train_data
 #   PARAMETERS  #
 datapath = 'data'  # Data path
 sample_patient = 'patient0100'  # filename for plot_sample()
-img_rows = 96
-img_cols = 96
+img_rows = 128
+img_cols = 128
 #################
 
 
@@ -132,7 +133,7 @@ def plot_sample(model, sample, datapath='data/', phase='ED'):
     plt.clf()
 
 
-def boxPlot():
+def boxPlotDistance():
     """
     Create a seaborn boxplot comparing DNN & CNN models on the distribution of distance between the predicted center
     & the ground truth center.
@@ -145,7 +146,7 @@ def boxPlot():
         model = load_model('output/models/{}_model_{}.h5'.format(net, img_rows))
 
         # get data
-        X, y = load_train_data(model=net, data='both')
+        X, y = load_train_data(model=net, data='both',img_rows=img_rows, img_cols=img_cols)
         _, X_test, _, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
 
         # get predictions
@@ -177,7 +178,79 @@ def boxPlot():
     plt.clf()
 
 
+def boxPlotAngle():
+    """
+    Create a seaborn boxplot comparing DNN & CNN models on the distribution of angle between the predicted orientation
+    & the ground truth orientation.
+    The angle is computed using the dot product between the vectors defined by 2 points.
+    :return: None, create a seaborn boxplot.
+    """
+    angle = []
+    label = []
+    for net in ['dnn', 'cnn']:
+        # load saved model
+        model = load_model('output/models/{}_model_{}.h5'.format(net, img_rows))
+
+        # get data
+        X, y = load_train_data(model=net, data='both', img_rows=img_rows, img_cols=img_cols)
+        _, X_test, _, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
+
+        # get predictions
+        net_pred = model.predict(X_test, verbose=0)
+
+        # ground truth & predicted center coordinates are in [-1,1], scaling them back to [0, img_rows] to compute
+        # the distance in pixels
+        for array in [net_pred, y_test]:
+            array[:, 0] = array[:, 0] * (img_rows / 2) + (img_rows / 2)
+            array[:, 1] = array[:, 1] * (img_cols / 2) + (img_cols / 2)
+
+        # compute vector corresponding to predicted orientation
+        predVectorY = net_pred[:, 1] - net_pred[:, 2] * 30
+        predVectorX = net_pred[:, 0] - net_pred[:, 3] * 30
+        predVector = np.array([(predVectorY[i], predVectorX[i]) for i in range(0, len(predVectorY))])
+        predMagnitude = np.array([(predVectorY[i] ** 2 + predVectorX[i] ** 2) ** 0.5 for i in range(0, len(predVectorY))])
+
+        # compute vector corresponding to ground truth orientation
+        trueVectorY = y_test[:, 1] - y_test[:, 2] * 30
+        trueVectorX = y_test[:, 0] - y_test[:, 3] * 30
+        trueVector = np.array([(trueVectorY[i], trueVectorX[i]) for i in range(0, len(trueVectorY))])
+        trueMagnitude = np.array(
+            [(trueVectorY[i] ** 2 + trueVectorX[i] ** 2) ** 0.5 for i in range(0, len(trueVectorY))])
+
+        net_angle = []
+        for i in range(0, len(trueVector)):
+            dotProduct = trueVector[i][0] * predVector[i][0] + trueVector[i][1] * predVector[i][1]
+            dotProduct /= (trueMagnitude[i] * predMagnitude[i])
+            dotProduct = dotProduct % 1
+            dotProduct = math.acos(dotProduct)
+            dotProduct = math.degrees(dotProduct) % 360
+
+            #if dotProduct - 180 >= 0:
+            #    dotProduct = 360 - dotProduct
+
+            net_angle.append(dotProduct)
+
+        net_angle = np.asarray(net_angle)
+        print('{} average angle error : '.format(net.upper()), np.mean(net_angle))
+        angle = np.concatenate((angle, net_angle))
+        label += [net.upper()] * net_angle.shape[0]
+
+    df = pd.DataFrame({'Angle (degrees)': angle, 'Model used': label})
+
+    # generate seaborn boxplot
+    sns.boxplot(x='Model used', y='Angle (degrees)', data=df, orient='v')
+    plt.title('Distribution of difference of angle of orientation. Input image size = {}'.format(img_rows))
+
+    # Create directory to store pdf files.
+    directory = os.path.join(os.getcwd(), 'output/plots/')
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    plt.savefig("output/plots/orientation_angle_boxplot_{}.pdf".format(img_rows), bbox_inches='tight')
+    plt.clf()
+
+
 if __name__ == '__main__':
     #plot_sample(model='dnn', sample=sample_patient, datapath=datapath, phase='ES')
     #plot_loss(model='dnn')
-    boxPlot()
+    #boxPlotDistance()
+    boxPlotAngle()
