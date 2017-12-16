@@ -20,13 +20,13 @@ The project is developed by :
 First, clone the repository :
 
 
-git clone git@gitlab.in2p3.fr:olivier.bernard/tdsi-challenge-deep-echo.git
+    git clone git@gitlab.in2p3.fr:olivier.bernard/tdsi-challenge-deep-echo.git
 
 
 Install the required python packages:
 
 
-sudo cd tdsi-challenge-deep-echo && pip3 install -r requirements.txt
+    sudo cd tdsi-challenge-deep-echo && pip3 install -r requirements.txt
 
 
 You are invited to have a look at the  `read-med-files.py` script. This script shows how to use some of the most used methods defined in the local module **deepecho**.  You can execute this command to run this script :
