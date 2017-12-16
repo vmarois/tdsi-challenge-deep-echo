@@ -1,6 +1,7 @@
 SimpleITK
 numpy
 matplotlib
+seaborn
 scipy
 Pillow
 pandas
