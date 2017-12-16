@@ -39,9 +39,9 @@ The project is  divided in 3 scripts :
 
 * `trainneuralnet.py` creates, compiles & trains 2 neural network models : a Dense Neural Network (DNN) and a Convolutional Neural Network. Below are pictures showing the architecture of these neural networks :
 
-![DNN Model](images/dnn.png) <!-- .element height="50%" width="50%" -->
+![DNN Model](images/dnn.png)
 
-![CNN Model](images/cnn.png) <!-- .element height="50%" width="50%" -->
+![CNN Model](images/cnn.png)
 
 After the networks have been trained, there are saved to `cnn_model.h5` & `dnn_model.h5` along with the metrics evolution during their training.
 
