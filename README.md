@@ -31,16 +31,17 @@ Install the required python packages:
 
 You are invited to have a look at the  `read-med-files.py` script. This script shows how to use some of the most used methods defined in the local module **deepecho**.  You can execute this command to run this script :
 
-python3 read-med-files.py
+    python3 read-med-files.py
+    
 
 The project is  divided in 3 scripts :
 * `data.py` which processes the raw data to produce 2 files, *images.npy* & *targets.npy*. These 2 files contain respectively the input images for the neural network (resized to 96 x 96 or 128 x 128), and the target features we want to predict, e.g. the center coordinates (x,y) and the main orientation (normalized coordinates of the eigenvector of the covariance matrix associated with the largest eigenvalue).
 
 * `trainneuralnet.py` creates, compiles & trains 2 neural network models : a Dense Neural Network (DNN) and a Convolutional Neural Network. Below are pictures showing the architecture of these neural networks :
 
-![DNN Model](images/dnn.png)
+![DNN Model](images/dnn.png) <!-- .element height="50%" width="50%" -->
 
-![CNN Model](images/cnn.png)
+![CNN Model](images/cnn.png) <!-- .element height="50%" width="50%" -->
 
 After the networks have been trained, there are saved to `cnn_model.h5` & `dnn_model.h5` along with the metrics evolution during their training.
 
