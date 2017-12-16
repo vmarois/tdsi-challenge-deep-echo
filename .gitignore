@@ -2,7 +2,6 @@
 *.fig
 *.avi
 *.pptx
-*.png
 *.obj
 *.h5
 *.hdf5
