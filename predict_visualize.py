@@ -159,15 +159,15 @@ def boxPlotDistance():
             array[:, 1] = array[:, 1] * (img_cols / 2) + (img_cols / 2)
 
         # compute distance between predicted center & true center and group result in a pandas dataframe
-        net_distance = np.sqrt((y_test[:, 0] - net_pred[:, 0]) ** 2 + (y_test[:, 1] - net_pred[:, 1]) ** 2)
-        print('{} average distance error : '.format(net.upper()), np.mean((net_distance)))
+        net_distance = np.sqrt(((y_test[:, 0] - net_pred[:, 0]) * 0.154) ** 2 + ((y_test[:, 1] - net_pred[:, 1]) * 0.308) ** 2)
+        print('{} average distance error (mm): '.format(net.upper()), np.mean((net_distance)))
         distance = np.concatenate((distance, net_distance))
         label += [net.upper()] * net_distance.shape[0]
 
-    df = pd.DataFrame({'Distance (pixels)': distance, 'Model used': label})
+    df = pd.DataFrame({'Distance (mm)': distance, 'Model used': label})
 
     # generate seaborn boxplot
-    sns.boxplot(x='Model used', y='Distance (pixels)', data=df, orient='v')
+    sns.boxplot(x='Model used', y='Distance (mm)', data=df, orient='v')
     plt.title('Distribution of predicted distance to true center. Input image size = {}'.format(img_rows))
 
     # Create directory to store pdf files.
@@ -252,5 +252,5 @@ def boxPlotAngle():
 if __name__ == '__main__':
     #plot_sample(model='dnn', sample=sample_patient, datapath=datapath, phase='ES')
     #plot_loss(model='dnn')
-    #boxPlotDistance()
-    boxPlotAngle()
+    boxPlotDistance()
+    #boxPlotAngle()
