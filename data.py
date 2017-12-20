@@ -11,8 +11,8 @@ from deepecho import *
 #   PARAMETERS  #
 data_path = 'data/'  # Data path
 phase = 'ED'  # select phase for create_train_data()
-img_rows = 96  # New dimensions when resizing the images
-img_cols = 96
+img_rows = 128  # New dimensions when resizing the images
+img_cols = 128
 #################
 
 
@@ -222,6 +222,6 @@ def load_train_data(model, data, img_rows=96, img_cols=96):
 if __name__ == '__main__':
     #create_train_data(phase=phase, img_rows=img_rows, img_cols=img_cols, verbose=0)
     create_train_data_2(img_rows=img_rows, img_cols=img_cols, verbose=0)
-    X, y = load_train_data(model='cnn', data='both', img_rows=img_rows, img_cols=img_cols)
+    X, y = load_train_data(model='dnn', data='both', img_rows=img_rows, img_cols=img_cols)
     print("X.shape = {}".format(X.shape))
     print("y.shape = {}".format(y.shape))

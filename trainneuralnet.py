@@ -15,13 +15,13 @@ from data import load_train_data
 
 #   PARAMETERS  #
 num_classes = 4  # 4 target features to output
-epochs = 35  # number of training epochs
+epochs = 25  # number of training epochs
 lr_start_cnn = 0.01  # start value for decreasing learning rate (cnn model only)
 lr_stop_cnn = 0.0005  # stop value for decreasing learning rate (cnn model only)
 lr_dnn = 0.0001
 
 # input image dimensions
-img_rows, img_cols = 96, 96
+img_rows, img_cols = 128, 128
 dnn_input_shape = img_rows * img_cols
 cnn_input_shape = (1, img_rows, img_cols)
 ##################
@@ -85,8 +85,13 @@ def get_cnn_model():
 def fit_dnn_model():
 
     # get data : can specify if selecting one phase only or both : 'ED', 'ES, 'both'
-    X, y = load_train_data(model='dnn', data='both',img_rows=img_rows, img_cols=img_cols)
+    X, y = load_train_data(model='dnn', data='both', img_rows=img_rows, img_cols=img_cols)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+    # save test data to file to later on produce boxplots using it
+    np.save('output/processed_data/dnn_X_test_{}.npy'.format(img_rows), X_test)
+    np.save('output/processed_data/dnn_y_test_{}.npy'.format(img_rows), y_test)
+    print('Saved test data of DNN to file. Will be used to produce boxplots.')
 
     # get model
     model = get_dnn_model()
@@ -107,6 +112,7 @@ def fit_dnn_model():
     # save metrics evolution
     np.savetxt('output/metrics_evolution/dnn_model_loss_{}.csv'.format(img_rows), hist.history['loss'])
     np.savetxt('output/metrics_evolution/dnn_model_acc_{}.csv'.format(img_rows), hist.history['acc'])
+    print('Saved metrics evolution during training to file.')
 
     # Create directory to store model to file.
     directory = os.path.join(os.getcwd(), 'output/models/')
@@ -122,6 +128,11 @@ def fit_cnn_model():
     # get data : can specify if selecting one phase only or both : 'ED', 'ES, 'both'
     X, y = load_train_data(model='cnn', data='both', img_rows=img_rows, img_cols=img_cols)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+    # save test data to file to later on produce boxplots using it
+    np.save('output/processed_data/cnn_X_test_{}.npy'.format(img_rows), X_test)
+    np.save('output/processed_data/cnn_y_test_{}.npy'.format(img_rows), y_test)
+    print('Saved test data of CNN to file. Will be used to produce boxplots.')
 
     # get model
     model = get_cnn_model()
@@ -148,6 +159,7 @@ def fit_cnn_model():
     # save metrics evolution
     np.savetxt('output/metrics_evolution/cnn_model_loss_{}.csv'.format(img_rows), hist.history['loss'])
     np.savetxt('output/metrics_evolution/cnn_model_acc_{}.csv'.format(img_rows), hist.history['acc'])
+    print('Saved metrics evolution during training to file.')
 
     # Create directory to store model to file.
     directory = os.path.join(os.getcwd(), 'output/models/')
@@ -159,5 +171,5 @@ def fit_cnn_model():
 
 
 if __name__ == '__main__':
-    #fit_dnn_model()
-    fit_cnn_model()
+    fit_dnn_model()
+    #fit_cnn_model()

@@ -17,7 +17,7 @@ from data import load_train_data
 
 #   PARAMETERS  #
 datapath = 'data'  # Data path
-sample_patient = 'patient0100'  # filename for plot_sample()
+sample_patient = 'patient0200'  # filename for plot_sample()
 img_rows = 128
 img_cols = 128
 #################
@@ -145,15 +145,16 @@ def boxPlotDistance():
         # load saved model
         model = load_model('output/models/{}_model_{}.h5'.format(net, img_rows))
 
-        # get data
-        X, y = load_train_data(model=net, data='both',img_rows=img_rows, img_cols=img_cols)
-        _, X_test, _, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
+        # load test data saved during training phase.
+        print('Loading {} test data'.format(net))
+        X_test = np.load('output/processed_data/{}_X_test_{}.npy'.format(net, img_rows))
+        y_test = np.load('output/processed_data/{}_y_test_{}.npy'.format(net, img_rows))
 
         # get predictions
         net_pred = model.predict(X_test, verbose=0)
 
         # ground truth & predicted center coordinates are in [-1,1], scaling them back to [0, img_rows] to compute
-        # the distance in pixels
+        # the distance in pixels‘
         for array in [net_pred, y_test]:
             array[:, 0] = array[:, 0] * (img_rows / 2) + (img_rows / 2)
             array[:, 1] = array[:, 1] * (img_cols / 2) + (img_cols / 2)
@@ -191,9 +192,9 @@ def boxPlotAngle():
         # load saved model
         model = load_model('output/models/{}_model_{}.h5'.format(net, img_rows))
 
-        # get data
-        X, y = load_train_data(model=net, data='both', img_rows=img_rows, img_cols=img_cols)
-        _, X_test, _, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
+        # load test data saved during training phase.
+        X_test = np.load('output/processed_data/{}_X_test_{}.npy'.format(net, img_rows))
+        y_test = np.load('output/processed_data/{}_y_test_{}.npy'.format(net, img_rows))
 
         # get predictions
         net_pred = model.predict(X_test, verbose=0)
@@ -225,8 +226,8 @@ def boxPlotAngle():
             dotProduct = math.acos(dotProduct)
             dotProduct = math.degrees(dotProduct) % 360
 
-            #if dotProduct - 180 >= 0:
-            #    dotProduct = 360 - dotProduct
+            if dotProduct - 180 >= 0:
+                dotProduct = 360 - dotProduct
 
             net_angle.append(dotProduct)
 
@@ -253,4 +254,4 @@ if __name__ == '__main__':
     #plot_sample(model='dnn', sample=sample_patient, datapath=datapath, phase='ES')
     #plot_loss(model='dnn')
     boxPlotDistance()
-    #boxPlotAngle()
+    boxPlotAngle()
