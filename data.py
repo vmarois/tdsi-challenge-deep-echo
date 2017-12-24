@@ -1,7 +1,8 @@
 # This file is part of tdsi-deep-echo-challenge
 import sys
 import os
-from skimage.transform import resize
+from skimage.transform import resize, AffineTransform, warp
+
 import numpy as np
 
 # Set python path to find the local deepecho package
@@ -40,6 +41,9 @@ def create_train_data(phase='ED', img_rows=96, img_cols=96, verbose=1):
     # We have 4 main features : rowCenter, colCenter, xOrientation, yOrientation (stored in that order).
     targets = np.ndarray((len(patients), 4), dtype=np.float32)
 
+    # create a third empty numpy.ndarray to store the new pixel dimensions of the images, as they change when resizing.
+    pixel_dim = np.ndarray((len(patients), 2), dtype=np.float32)
+
     # we now go through each patient's directory :
     for idx, patient in enumerate(patients):
 
@@ -47,12 +51,18 @@ def create_train_data(phase='ED', img_rows=96, img_cols=96, verbose=1):
         img, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}.mhd'.format(d=data_path, pa=patient, ph=phase))
         img_mask, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}_gt.mhd'.format(d=data_path, pa=patient, ph=phase))
 
+        # get the new pixel dimensions due to resizing : scale factor is orig_dim / new_dim
+        pixel_width = 0.154 * (float(img.shape[0]) / img_cols)
+        pixel_height = 0.308 * (float(img.shape[1]) / img_rows)
+        # store them
+        pixel_dim[idx] = np.array([pixel_width, pixel_height])
+
         # extract the region corresponding to the left ventricle in the image mask (region where pixel = 1)
         img_mask = getRoi(img_mask, 1)
 
         # resize the img & the mask to (img_rows, img_cols) to keep the network input manageable
-        img = resize(img, (img_cols, img_rows), mode='reflect', preserve_range=True)
-        img_mask = resize(img_mask, (img_cols, img_rows), mode='reflect', preserve_range=True)
+        img = resize(img, (img_rows, img_cols), mode='reflect', preserve_range=True)
+        img_mask = resize(img_mask, (img_rows, img_cols), mode='reflect', preserve_range=True)
 
         # get the center coordinates of the left ventricle (on the resized image)
         row, col = findCenter(img_mask)
@@ -77,13 +87,14 @@ def create_train_data(phase='ED', img_rows=96, img_cols=96, verbose=1):
             print('######### Done: {0}/{1} patients'.format(idx+1, len(patients)))
 
     print('Data processing done.')
-    # save both ndarrays to a .npy files (for faster loading later)
+    # save all ndarrays to a .npy files (for faster loading later)
     # Create directory to store pdf files.
     directory = os.path.join(os.getcwd(), 'output/processed_data/')
     if not os.path.exists(directory):
         os.makedirs(directory)
     np.save('output/processed_data/images_phase_{}_{}.npy'.format(phase, img_rows), images)
     np.save('output/processed_data/targets_phase_{}_{}.npy'.format(phase, img_rows), targets)
+    np.save('output/processed_data/pixel_dim_phase_{}_{}.npy'.format(phase, img_rows), pixel_dim)
     print('Saving to .npy files done.')
 
 
@@ -111,6 +122,9 @@ def create_train_data_2(img_rows=96, img_cols=96, verbose=1):
     # We have 4 main features : rowCenter, colCenter, xOrientation, yOrientation (stored in that order).
     targets = np.ndarray((2 * len(patients), 4), dtype=np.float32)
 
+    # create a third empty numpy.ndarray to store the new pixel dimensions of the images, as they change when resizing.
+    pixel_dim = np.ndarray((2 * len(patients), 2), dtype=np.float32)
+
     # define iterable containing the different phases
     phases = ['ED', 'ES']
 
@@ -123,6 +137,12 @@ def create_train_data_2(img_rows=96, img_cols=96, verbose=1):
             # read image & mask
             img, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}.mhd'.format(d=data_path, pa=patient, ph=phase))
             img_mask, _, _, _ = acquisition.load_mhd_data('{d}/{pa}/{pa}_4CH_{ph}_gt.mhd'.format(d=data_path, pa=patient, ph=phase))
+
+            # get the new pixel dimensions due to resizing : scale factor is orig_dim / new_dim
+            pixel_width = 0.154 * (float(img.shape[0]) / img_cols)
+            pixel_height = 0.308 * (float(img.shape[1]) / img_rows)
+            # store them
+            pixel_dim[idx] = np.array([pixel_width, pixel_height])
 
             # extract the region corresponding to the left ventricle in the image mask (region where pixel = 1)
             img_mask = getRoi(img_mask, 1)
@@ -157,13 +177,14 @@ def create_train_data_2(img_rows=96, img_cols=96, verbose=1):
             print('######### Done: {0}/{1} patients'.format(round(idx/2), len(patients)))
 
     print('Data processing done.')
-    # save both ndarrays to a .npy files (for faster loading later)
+    # save all ndarrays to a .npy files (for faster loading later)
     # Create directory to store files.
     directory = os.path.join(os.getcwd(), 'output/processed_data/')
     if not os.path.exists(directory):
         os.makedirs(directory)
     np.save('output/processed_data/images_both_phases_{}.npy'.format(img_rows), images)
     np.save('output/processed_data/targets_both_phases_{}.npy'.format(img_rows), targets)
+    np.save('output/processed_data/pixel_dim_both_phases_{}.npy'.format(img_rows), pixel_dim)
     print('Saving to .npy files done.')
 
 
@@ -176,7 +197,7 @@ def load_train_data(model, data, img_rows=96, img_cols=96):
     or 'both'.
     :param img_rows: the new x-axis dimension used to resize the images
     :param img_cols: the new y-axis dimension used to resize the images
-    :return: images & target features as numpy arrays.
+    :return: images, target features & pixel dimensions as numpy arrays.
     """
     print('#' * 30)
     print('Loading data from file. Selecting {} phase.'.format(data))
@@ -194,6 +215,9 @@ def load_train_data(model, data, img_rows=96, img_cols=96):
 
     # read in the .npy file containing the target features
     targets = np.load(dataname.format('targets', img_rows))
+
+    # read in the .npy file containing the pixel dimensions
+    pixel_dim = np.load(dataname.format('pixel_dim', img_rows))
 
     # scale image pixel values to [0, 1]
     images = images.astype(np.float32)
@@ -216,12 +240,13 @@ def load_train_data(model, data, img_rows=96, img_cols=96):
           'and target center coordinates to [-1, 1].')
     print('#' * 30)
 
-    return images, targets
+    return images, targets, pixel_dim
 
 
 if __name__ == '__main__':
     #create_train_data(phase=phase, img_rows=img_rows, img_cols=img_cols, verbose=0)
     create_train_data_2(img_rows=img_rows, img_cols=img_cols, verbose=0)
-    X, y = load_train_data(model='dnn', data='both', img_rows=img_rows, img_cols=img_cols)
+    X, y, pixel_dim = load_train_data(model='dnn', data='both', img_rows=img_rows, img_cols=img_cols)
     print("X.shape = {}".format(X.shape))
     print("y.shape = {}".format(y.shape))
+    print("pixel_dim.shape = {}".format(pixel_dim.shape))

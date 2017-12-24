@@ -17,7 +17,7 @@ from data import load_train_data
 
 #   PARAMETERS  #
 datapath = 'data'  # Data path
-sample_patient = 'patient0200'  # filename for plot_sample()
+sample_patient = 'patient0050'  # filename for plot_sample()
 img_rows = 128
 img_cols = 128
 #################
@@ -149,6 +149,7 @@ def boxPlotDistance():
         print('Loading {} test data'.format(net))
         X_test = np.load('output/processed_data/{}_X_test_{}.npy'.format(net, img_rows))
         y_test = np.load('output/processed_data/{}_y_test_{}.npy'.format(net, img_rows))
+        pixel_dim_test = np.load('output/processed_data/{}_pixel_dim_test_{}.npy'.format(net, img_rows))
 
         # get predictions
         net_pred = model.predict(X_test, verbose=0)
@@ -160,8 +161,8 @@ def boxPlotDistance():
             array[:, 1] = array[:, 1] * (img_cols / 2) + (img_cols / 2)
 
         # compute distance between predicted center & true center and group result in a pandas dataframe
-        net_distance = np.sqrt(((y_test[:, 0] - net_pred[:, 0]) * 0.154) ** 2 + ((y_test[:, 1] - net_pred[:, 1]) * 0.308) ** 2)
-        print('{} average distance error (mm): '.format(net.upper()), np.mean((net_distance)))
+        net_distance = np.sqrt(((y_test[:, 0] - net_pred[:, 0]) * pixel_dim_test[:, 0]) ** 2 + ((y_test[:, 1] - net_pred[:, 1]) * pixel_dim_test[:, 1]) ** 2)
+        print('{} average distance error (mm): '.format(net.upper()), np.mean(net_distance))
         distance = np.concatenate((distance, net_distance))
         label += [net.upper()] * net_distance.shape[0]
 

@@ -85,12 +85,13 @@ def get_cnn_model():
 def fit_dnn_model():
 
     # get data : can specify if selecting one phase only or both : 'ED', 'ES, 'both'
-    X, y = load_train_data(model='dnn', data='both', img_rows=img_rows, img_cols=img_cols)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    X, y, pixel_dim = load_train_data(model='dnn', data='both', img_rows=img_rows, img_cols=img_cols)
+    X_train, X_test, y_train, y_test, pixel_dim_train, pixel_dim_test = train_test_split(X, y, pixel_dim, test_size=0.3, random_state=42)
 
     # save test data to file to later on produce boxplots using it
     np.save('output/processed_data/dnn_X_test_{}.npy'.format(img_rows), X_test)
     np.save('output/processed_data/dnn_y_test_{}.npy'.format(img_rows), y_test)
+    np.save('output/processed_data/dnn_pixel_dim_test_{}.npy'.format(img_rows), pixel_dim_test)
     print('Saved test data of DNN to file. Will be used to produce boxplots.')
 
     # get model
@@ -126,12 +127,13 @@ def fit_dnn_model():
 def fit_cnn_model():
 
     # get data : can specify if selecting one phase only or both : 'ED', 'ES, 'both'
-    X, y = load_train_data(model='cnn', data='both', img_rows=img_rows, img_cols=img_cols)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+    X, y, pixel_dim = load_train_data(model='cnn', data='both', img_rows=img_rows, img_cols=img_cols)
+    X_train, X_test, y_train, y_test, pixel_dim_train, pixel_dim_test = train_test_split(X, y, pixel_dim, test_size=0.3, random_state=42)
 
     # save test data to file to later on produce boxplots using it
     np.save('output/processed_data/cnn_X_test_{}.npy'.format(img_rows), X_test)
     np.save('output/processed_data/cnn_y_test_{}.npy'.format(img_rows), y_test)
+    np.save('output/processed_data/cnn_pixel_dim_test_{}.npy'.format(img_rows), pixel_dim_test)
     print('Saved test data of CNN to file. Will be used to produce boxplots.')
 
     # get model
