@@ -19,7 +19,7 @@ The project is developed by :
 First, clone the repository :
 
 
-    git clone git@gitlab.in2p3.fr:olivier.bernard/tdsi-challenge-deep-echo.git
+    git clone git@github.com:vmarois/tdsi-challenge-deep-echo.git
 
 
 Install the required python packages:
@@ -54,4 +54,3 @@ This structure allows :
 - For clearer and shorter main scripts,
 - We are able to gather some functions by their role in the project (data acquisition, preprocessing, visualization etc)
 - Code maintenance and the addition of future features are simplified.
-
