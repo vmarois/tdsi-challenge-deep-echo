@@ -8,12 +8,11 @@ A `Python 3` project for the analysis of 2D cardiac ultrasound images through th
 - Pandas
 - Matplotlib & Seaborn
 - SimpleITK
-& others built-in packages (full list in requirements.txt).
+& others built-in packages (full list in _requirements.txt_).
 
 The project is developed by :
 
-* vincent.marois@protonmail.com
-* camille.louvet@insa-lyon.fr
+* Vincent Marois <vincent.marois@protonmail.com>
 
 ### How do I get set up? ###
 
@@ -46,12 +45,6 @@ The project is  divided in 3 scripts :
 After the networks have been trained, there are saved to `cnn_model.h5` & `dnn_model.h5` along with the metrics evolution during their training.
 
 * `predict_visualize.py` loads back a given model from file, makes a prediction on one given image and plot the predicted center & orientation along the true center on the image. It also produces boxplots to compare the DNN & CNN on the distance between the predicted center & ground truth center, and on the difference of angle between the predicted orientation & ground truth one. It is also possible to plot the metrics evolution of a model.
-
-### Who do I talk to? ###
-
-The project administrators are:
-
-* Olivier Bernard <olivier.bernard@creatis.insa-lyon.fr>
 
 ### How is structured this project ? ###
 
