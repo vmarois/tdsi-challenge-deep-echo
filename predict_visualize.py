@@ -11,6 +11,7 @@ import pandas as pd
 import math
 import os
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 
 from deepecho import *
 from data import load_train_data
@@ -153,6 +154,7 @@ def boxPlotDistance():
 
         # get predictions
         net_pred = model.predict(X_test, verbose=0)
+        print("test mean squared error: ", mean_squared_error(y_test[:,0], net_pred[:,0]))
 
         # ground truth & predicted center coordinates are in [-1,1], scaling them back to [0, img_rows] to compute
         # the distance in pixels‘
@@ -252,7 +254,7 @@ def boxPlotAngle():
 
 
 if __name__ == '__main__':
-    #plot_sample(model='dnn', sample=sample_patient, datapath=datapath, phase='ES')
-    #plot_loss(model='dnn')
+    plot_sample(model='dnn', sample=sample_patient, datapath=datapath, phase='ES')
+    plot_loss(model='dnn')
     boxPlotDistance()
     boxPlotAngle()
